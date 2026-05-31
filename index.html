@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>法律智能问答机器人</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", "PingFang SC", sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 顶部导航栏 */
+        .header {
+            background-color: #165DFF;
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .header .icon {
+            font-size: 26px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        /* 主容器 */
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 首页输入框区域 */
+        .top-input-area {
+            background-color: white;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            z-index: 5;
+        }
+
+        .input-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        #home-input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 1px solid #ddd;
+            border-radius: 24px;
+            outline: none;
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+
+        #home-input:focus {
+            border-color: #165DFF;
+            box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.1);
+        }
+
+        #home-send-btn {
+            padding: 14px 28px;
+            background-color: #165DFF;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        #home-send-btn:hover {
+            background-color: #0f4cd1;
+        }
+
+        /* 分类卡片区域 */
+        .category-section {
+            background-color: white;
+            padding: 24px;
+            border-top: 1px solid #eee;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .category-title {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 16px;
+            font-weight: 600;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .category-card {
+            background-color: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.25s;
+            text-align: center;
+        }
+
+        .category-card:hover {
+            background-color: #e8f3ff;
+            border-color: #165DFF;
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(22, 93, 255, 0.1);
+        }
+
+        .category-card .icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .category-card .name {
+            font-size: 15px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* 聊天界面 */
+        .chat-area {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            background-color: #f8f9fa;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background-color: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #165DFF;
+        }
+
+        .chat-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .chat-box {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background-color: #fafafa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .msg-content {
+            max-width: 70%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            line-height: 1.7;
+            font-size: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            word-break: break-word;
+        }
+
+        .user .msg-content {
+            background-color: #165DFF;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot .msg-content {
+            background-color: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+
+        /* 聊天界面输入框 */
+        .chat-input-area {
+            padding: 16px 24px;
+            background-color: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #chat-input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 1px solid #ddd;
+            border-radius: 24px;
+            outline: none;
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+
+        #chat-input:focus {
+            border-color: #165DFF;
+            box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.1);
+        }
+
+        #chat-send-btn {
+            padding: 14px 28px;
+            background-color: #165DFF;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        #chat-send-btn:hover {
+            background-color: #0f4cd1;
+        }
+
+        /* 推荐问题卡片 */
+        .suggestion-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            max-width: 70%;
+        }
+
+        .suggestion-title {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .suggestion-list {
+            list-style: none;
+        }
+
+        .suggestion-item {
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 15px;
+            color: #555;
+        }
+
+        .suggestion-item:hover {
+            background-color: #e8f3ff;
+            color: #165DFF;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="header">
+        <span class="icon">⚖️</span>
+        <div>
+            <h1>法律智能问答机器人</h1>
+            <p>为您提供专业法律咨询服务</p>
+        </div>
+    </div>
+
+    <!-- 首页 -->
+    <div class="main-container" id="home-page">
+        <!-- 首页输入框 -->
+        <div class="top-input-area">
+            <div class="input-box">
+                <input type="text" id="home-input" placeholder="请输入您的法律问题">
+                <button id="home-send-btn">发送</button>
+            </div>
+        </div>
+
+        <!-- 分类卡片 -->
+        <div class="category-section">
+            <h3 class="category-title">热门法律问题分类</h3>
+            <div class="category-grid">
+                <div class="category-card" onclick="enterCategory('labor')">
+                    <div class="icon">💼</div>
+                    <div class="name">劳动合同纠纷</div>
+                </div>
+                <div class="category-card" onclick="enterCategory('marriage')">
+                    <div class="icon">👨‍👩‍👧</div>
+                    <div class="name">婚姻家庭纠纷</div>
+                </div>
+                <div class="category-card" onclick="enterCategory('debt')">
+                    <div class="icon">💰</div>
+                    <div class="name">借贷纠纷</div>
+                </div>
+                <div class="category-card" onclick="enterCategory('traffic')">
+                    <div class="icon">🚗</div>
+                    <div class="name">交通事故纠纷</div>
+                </div>
+                <div class="category-card" onclick="enterCategory('infringement')">
+                    <div class="icon">🛡️</div>
+                    <div class="name">人身伤害</div>
+                </div>
+                <div class="category-card" onclick="enterCategory('consumer')">
+                    <div class="icon">🛒</div>
+                    <div class="name">消费维权</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 聊天界面 -->
+    <div class="chat-area" id="chat-page">
+        <div class="chat-header">
+            <button class="back-btn" onclick="backToHome()">←</button>
+            <div class="chat-title" id="chat-title"></div>
+            <div style="margin-left: auto;">
+                <select id="model-selector" style="padding: 6px; border-radius: 8px; border: 1px solid #ddd;">
+                    <option value="api">在线大模型</option>
+                    <option value="local_rag">本地大模型</option>
+                </select>
+            </div>
+        </div>
+        <div class="chat-box" id="chat-box"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="请输入您的法律问题">
+            <button id="chat-send-btn">发送</button>
+        </div>
+    </div>
+<script>
+// 功能：每个分类聊天记录独立，推荐问题每次进入都可点击
+
+// 每个分类对应的推荐问题
+const suggestions = {
+    labor: {
+        title: "劳动合同纠纷",
+        questions: [
+            "试用期被辞退有补偿吗？",
+            "没签劳动合同怎么维权？",
+            "公司拖欠工资怎么办？"
+        ]
+    },
+    marriage: {
+        title: "婚姻家庭纠纷",
+        questions: [
+            "离婚财产如何分割？",
+            "抚养权一般怎么判？",
+            "家暴离婚需要什么证据？"
+        ]
+    },
+    debt: {
+        title: "借贷纠纷",
+        questions: [
+            "借钱不还怎么起诉？",
+            "借条有效期是多久？",
+            "高利贷受法律保护吗？"
+        ]
+    },
+    traffic: {
+        title: "交通事故纠纷",
+        questions: [
+            "交通事故赔偿怎么算？",
+            "全责方不赔钱怎么办？",
+            "交通事故责任怎么划分？"
+        ]
+    },
+    infringement: {
+        title: "人身伤害",
+        questions: [
+            "遭遇家暴如何维权？",
+            "被人打伤怎么索赔？",
+            "遭遇网络暴力怎么办？"
+        ]
+    },
+    consumer: {
+        title: "消费维权",
+        questions: [
+            "网络购物被欺诈怎么办？",
+            "买到假货怎么维权？",
+            "商家不退款怎么投诉？"
+        ]
+    }
+};
+
+// 存储每个分类的聊天记录
+const categoryChatRecords = {};
+let currentCategory = null;
+
+// 发送消息通用函数
+function sendMessage(inputId, chatBoxId) {
+    const input = document.getElementById(inputId);
+    const question = input.value.trim();
+    const modelSelector = document.getElementById("model-selector");
+    
+    const modelType = modelSelector ? modelSelector.value : "api"; 
+
+    if (!question) return;
+    addMessage("user", question, chatBoxId);
+    input.value = "";
+
+    console.log(`[发送请求] 模式: ${modelType}, 问题: ${question}`);
+
+    fetch("http://127.0.0.1:5000/api/chat/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+            question: question, 
+            category: currentCategory || "general",
+            user_id: "test_user_01",
+            model_type: modelType
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error(`HTTP 错误! 状态码: ${res.status}`);
+        return res.json();
+    })
+    .then(data => {
+        console.log("[后端原始返回]", data);
+
+        if (data && data.answer !== undefined && data.answer !== null) {
+            addMessage("bot", data.answer, chatBoxId);
+        } else {
+            console.error("后端返回的数据格式不正确，缺少 answer 字段:", data);
+            addMessage("bot", "异常：后端未返回内容", chatBoxId);
+        }
+    })
+    .catch(err => {
+        console.error("[网络错误]", err);
+        addMessage("bot", " 网络异常，请检查后端是否启动", chatBoxId);
+    });
+}
+// 显示消息并保存到当前分类记录
+function addMessage(sender, text, chatBoxId) {
+    const box = document.getElementById(chatBoxId);
+    const div = document.createElement("div");
+    div.className = "message " + sender;
+    div.innerHTML = `<div class="msg-content"><p>${text}</p></div>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+
+
+    if (currentCategory) {
+        if (!categoryChatRecords[currentCategory]) {
+            categoryChatRecords[currentCategory] = [];
+        }
+        categoryChatRecords[currentCategory].push({ sender, text });
+    }
+}
+
+// 进入分类聊天界面
+function enterCategory(type) {
+    currentCategory = type;
+    document.getElementById("home-page").style.display = "none";
+    document.getElementById("chat-page").style.display = "flex";
+    document.getElementById("chat-title").textContent = suggestions[type].title;
+    document.getElementById("chat-box").innerHTML = "";
+
+    // 每次进入都重新添加可点击的推荐问题卡片
+    const card = document.createElement("div");
+    card.className = "message bot";
+    card.innerHTML = `
+        <div class="suggestion-card">
+            <div class="suggestion-title">请告诉我您遇到的具体情况，比如：</div>
+            <ul class="suggestion-list">
+                ${suggestions[type].questions.map(q => `
+                    <li class="suggestion-item" onclick="sendQuickQuestion('${q}')">${q}</li>
+                `).join('')}
+            </ul>
+        </div>
+    `;
+    document.getElementById("chat-box").appendChild(card);
+
+    // 恢复该分类的历史问答记录
+    if (categoryChatRecords[type]) {
+        categoryChatRecords[type].forEach(record => {
+            const div = document.createElement("div");
+            div.className = "message " + record.sender;
+            div.innerHTML = `<div class="msg-content"><p>${record.text}</p></div>`;
+            document.getElementById("chat-box").appendChild(div);
+        });
+    }
+}
+
+// 点击推荐问题直接发送
+function sendQuickQuestion(question) {
+    document.getElementById("chat-input").value = question;
+    document.getElementById("chat-send-btn").click();
+}
+
+// 返回首页
+function backToHome() {
+    document.getElementById("chat-page").style.display = "none";
+    document.getElementById("home-page").style.display = "flex";
+    currentCategory = null;
+}
+
+// 绑定事件
+document.getElementById("home-send-btn").addEventListener("click", () => {
+    document.getElementById("home-page").style.display = "none";
+    document.getElementById("chat-page").style.display = "flex";
+    document.getElementById("chat-title").textContent = "法律智能问答机器人";
+    document.getElementById("chat-box").innerHTML = "";
+    sendMessage("home-input", "chat-box");
+});
+
+document.getElementById("chat-send-btn").addEventListener("click", () => {
+    sendMessage("chat-input", "chat-box");
+});
+</script>
+</body>
+</html>
